@@ -21,13 +21,172 @@
         <button class="tab active" data-tab="contrat">Contrat</button>
         <button class="tab" data-tab="presence">Presence</button>
       </nav>
-      <div id="tab-contrat" class="tab-content active"></div>
-      <div id="tab-presence" class="tab-content"></div>
+
+      <!-- ==================== TAB CONTRAT ==================== -->
+      <div id="tab-contrat" class="tab-content active">
+        <form id="form-contrat">
+          <fieldset class="form-section">
+            <legend>Informations du contrat</legend>
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="typeContrat">Type de contrat</label>
+                <select id="typeContrat" name="typeContrat">
+                  <option value="AC">Annee complete (AC)</option>
+                  <option value="AI">Annee incomplete (AI)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="nbSemContrat">Nb semaines / an</label>
+                <input type="number" id="nbSemContrat" name="nbSemContrat" value="52" min="1" max="52" step="1">
+              </div>
+              <div class="form-group">
+                <label for="tauxHoraire">Taux horaire brut</label>
+                <input type="number" id="tauxHoraire" name="tauxHoraire" value="3.50" min="0" step="0.01">
+              </div>
+              <div class="form-group">
+                <label for="region">Region</label>
+                <select id="region" name="region">
+                  <option value="Autres">Autres (hors Alsace-Moselle)</option>
+                  <option value="Alsace-Moselle">Alsace-Moselle</option>
+                </select>
+              </div>
+              <div class="form-group form-group-inline">
+                <label>
+                  <input type="checkbox" id="majorationHS" name="majorationHS">
+                  Majoration heures supplementaires
+                </label>
+              </div>
+              <div class="form-group" id="group-pourcentMajo" style="display:none;">
+                <label for="pourcentMajo">% majoration</label>
+                <input type="number" id="pourcentMajo" name="pourcentMajo" value="10" min="0" max="100" step="1">
+              </div>
+            </div>
+          </fieldset>
+
+          <fieldset class="form-section">
+            <legend>Jours travailles</legend>
+            <div class="jours-grid">
+              <div class="jour-config">
+                <label><input type="checkbox" id="jour-1" data-dow="1"> Lundi</label>
+                <input type="number" id="heures-1" data-dow="1" value="0" min="0" max="24" step="0.25" class="input-heures" placeholder="h">
+              </div>
+              <div class="jour-config">
+                <label><input type="checkbox" id="jour-2" data-dow="2"> Mardi</label>
+                <input type="number" id="heures-2" data-dow="2" value="0" min="0" max="24" step="0.25" class="input-heures" placeholder="h">
+              </div>
+              <div class="jour-config">
+                <label><input type="checkbox" id="jour-3" data-dow="3"> Mercredi</label>
+                <input type="number" id="heures-3" data-dow="3" value="0" min="0" max="24" step="0.25" class="input-heures" placeholder="h">
+              </div>
+              <div class="jour-config">
+                <label><input type="checkbox" id="jour-4" data-dow="4"> Jeudi</label>
+                <input type="number" id="heures-4" data-dow="4" value="0" min="0" max="24" step="0.25" class="input-heures" placeholder="h">
+              </div>
+              <div class="jour-config">
+                <label><input type="checkbox" id="jour-5" data-dow="5"> Vendredi</label>
+                <input type="number" id="heures-5" data-dow="5" value="0" min="0" max="24" step="0.25" class="input-heures" placeholder="h">
+              </div>
+              <div class="jour-config">
+                <label><input type="checkbox" id="jour-6" data-dow="6"> Samedi</label>
+                <input type="number" id="heures-6" data-dow="6" value="0" min="0" max="24" step="0.25" class="input-heures" placeholder="h">
+              </div>
+            </div>
+          </fieldset>
+
+          <fieldset class="form-section">
+            <legend>Indemnites</legend>
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="ieContractuelJour">IE / jour</label>
+                <input type="number" id="ieContractuelJour" name="ieContractuelJour" value="0" min="0" step="0.01">
+              </div>
+              <div class="form-group">
+                <label for="ieContractuelHeure">IE / heure</label>
+                <input type="number" id="ieContractuelHeure" name="ieContractuelHeure" value="0" min="0" step="0.001">
+              </div>
+              <div class="form-group">
+                <label for="tarifRepas1">Repas type 1</label>
+                <input type="number" id="tarifRepas1" name="tarifRepas1" value="0" min="0" step="0.01">
+              </div>
+              <div class="form-group">
+                <label for="tarifRepas2">Repas type 2</label>
+                <input type="number" id="tarifRepas2" name="tarifRepas2" value="0" min="0" step="0.01">
+              </div>
+              <div class="form-group">
+                <label for="tarifRepas3">Repas type 3</label>
+                <input type="number" id="tarifRepas3" name="tarifRepas3" value="0" min="0" step="0.01">
+              </div>
+              <div class="form-group">
+                <label for="tarifKm">Tarif km</label>
+                <input type="number" id="tarifKm" name="tarifKm" value="0" min="0" step="0.01">
+              </div>
+            </div>
+          </fieldset>
+
+          <button type="submit" class="btn-save">Enregistrer le contrat</button>
+        </form>
+      </div>
+
+      <!-- ==================== TAB PRESENCE ==================== -->
+      <div id="tab-presence" class="tab-content">
+        <div class="presence-wrapper">
+          <table id="table-presence" class="presence-table">
+            <thead><tr>
+              <th>Jour</th><th>Prevu</th><th>Potent.</th><th>Realise</th><th>Deduire</th>
+              <th>Absent</th><th>H.Comp</th><th>H.Majo</th><th>IE</th>
+              <th>IR</th><th>IK (km)</th><th>Commentaire</th>
+            </tr></thead>
+            <tbody id="tbody-presence"></tbody>
+            <tfoot id="tfoot-presence"></tfoot>
+          </table>
+        </div>
+      </div>
     </section>
 
     <aside class="side-panel">
       <h2>Declaration Pajemploi</h2>
-      <div id="pajemploi-results"></div>
+      <div id="pajemploi-results">
+        <div class="result-grid">
+          <div class="result-item">
+            <span class="result-label">Heures normales</span>
+            <span class="result-value" id="res-heures-normales">--</span>
+          </div>
+          <div class="result-item">
+            <span class="result-label">Heures comp.</span>
+            <span class="result-value" id="res-heures-comp">--</span>
+          </div>
+          <div class="result-item">
+            <span class="result-label">Heures majorees</span>
+            <span class="result-value" id="res-heures-majo">--</span>
+          </div>
+          <div class="result-item">
+            <span class="result-label">Jours d'activite</span>
+            <span class="result-value" id="res-jours-activite">--</span>
+          </div>
+          <div class="result-divider"></div>
+          <div class="result-item result-highlight">
+            <span class="result-label">Salaire net</span>
+            <span class="result-value" id="res-salaire-net">--</span>
+          </div>
+          <div class="result-item">
+            <span class="result-label">Taux horaire net</span>
+            <span class="result-value" id="res-taux-net">--</span>
+          </div>
+          <div class="result-divider"></div>
+          <div class="result-item">
+            <span class="result-label">Indemnites entretien</span>
+            <span class="result-value" id="res-ie">--</span>
+          </div>
+          <div class="result-item">
+            <span class="result-label">Indemnites repas</span>
+            <span class="result-value" id="res-ir">--</span>
+          </div>
+          <div class="result-item">
+            <span class="result-label">Indemnites km</span>
+            <span class="result-value" id="res-ik">--</span>
+          </div>
+        </div>
+      </div>
       <button id="btn-copy">Copier les valeurs</button>
       <details id="history-section">
         <summary>Historique des mois</summary>
