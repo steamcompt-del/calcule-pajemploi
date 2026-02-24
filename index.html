@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calcul Pajemploi</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="header">
+    <h1>Calcul Pajemploi</h1>
+    <div class="header-controls">
+      <label>Mois : <select id="select-month"></select></label>
+      <label>Annee : <select id="select-year"></select></label>
+    </div>
+  </header>
+
+  <main class="main-layout">
+    <section class="central-panel">
+      <nav class="tabs">
+        <button class="tab active" data-tab="contrat">Contrat</button>
+        <button class="tab" data-tab="presence">Presence</button>
+      </nav>
+      <div id="tab-contrat" class="tab-content active"></div>
+      <div id="tab-presence" class="tab-content"></div>
+    </section>
+
+    <aside class="side-panel">
+      <h2>Declaration Pajemploi</h2>
+      <div id="pajemploi-results"></div>
+      <button id="btn-copy">Copier les valeurs</button>
+      <details id="history-section">
+        <summary>Historique des mois</summary>
+        <ul id="history-list"></ul>
+      </details>
+    </aside>
+  </main>
+
+  <footer class="footer"><div id="footer-rates"></div></footer>
+
+  <script src="js/parametrage.js"></script>
+  <script src="js/calculs.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
