@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Tests Calculs Pajemploi</title>
+  <style>
+    body { font-family: monospace; padding: 2rem; background: #f8fafc; }
+    h1 { font-size: 1.3rem; margin-bottom: 1rem; }
+    .pass { color: #16a34a; }
+    .fail { color: #dc2626; font-weight: bold; }
+    pre { white-space: pre-wrap; line-height: 1.6; }
+    .summary { margin-top: 1rem; padding: 1rem; border-radius: 8px; font-size: 1.1rem; }
+    .summary.all-pass { background: #dcfce7; color: #16a34a; }
+    .summary.has-fail { background: #fef2f2; color: #dc2626; }
+  </style>
+</head>
+<body>
+<h1>Tests du moteur de calcul Pajemploi</h1>
+<pre id="output"></pre>
+<div id="summary" class="summary"></div>
+
+<script src="../js/parametrage.js"></script>
+<script src="../js/calculs.js"></script>
+<script>
+var passed = 0;
+var failed = 0;
+var outputEl = document.getElementById('output');
+
+function assert(name, actual, expected, tolerance) {
+  tolerance = tolerance || 0.01;
+  var pass = Math.abs(actual - expected) < tolerance;
+  var cls = pass ? 'pass' : 'fail';
+  var prefix = pass ? 'PASS' : 'FAIL';
+  var msg = prefix + ': ' + name + ' = ' + actual + (pass ? '' : ' (expected ' + expected + ')');
+  outputEl.innerHTML += '<span class="' + cls + '">' + msg + '</span>\n';
+  if (pass) { passed++; } else { failed++; }
+}
+
+function assertStrictEqual(name, actual, expected) {
+  var pass = actual === expected;
+  var cls = pass ? 'pass' : 'fail';
+  var prefix = pass ? 'PASS' : 'FAIL';
+  var msg = prefix + ': ' + name + ' = ' + JSON.stringify(actual) + (pass ? '' : ' (expected ' + JSON.stringify(expected) + ')');
+  outputEl.innerHTML += '<span class="' + cls + '">' + msg + '</span>\n';
+  if (pass) { passed++; } else { failed++; }
+}
+
+function section(title) {
+  outputEl.innerHTML += '\n--- ' + title + ' ---\n';
+}
+
+// ================================================================
+// round2
+// ================================================================
+section('round2');
+// Note: round2(1.005) = 1.00 due to IEEE 754 (1.005*100 = 100.4999...)
+// This is standard JS behavior and acceptable for our use case.
+assert('round2(1.005) floating point', round2(1.005), 1.00, 0.011);
+assert('round2(1.004)', round2(1.004), 1.00, 0.001);
+assert('round2(173.3333)', round2(173.3333), 173.33);
+assert('round2(0)', round2(0), 0);
+
+// ================================================================
+// Mensualisation - Test 1: Simple AC contract (40h/52sem, 4.50 euros)
+// ================================================================
+section('Mensualisation - AC 40h/52sem');
+var contrat1 = {
+  nbSemContrat: 52,
+  heuresParSemaine: 40,
+  joursParSemaine: 5,
+  tauxHoraire: 4.50,
+  majorationHS: false,
+  pourcentMajo: 0.1
+};
+var m1 = calculMensualisation(contrat1);
+assert('heuresMensu (40h/52sem)', m1.heuresMensu, 173.33);
+assert('joursMensu (5j/52sem)', m1.joursMensu, 21.67);
+assert('heuresMajoMensu (no majo)', m1.heuresMajoMensu, 0);
+assert('heuresNormalesMensu (= heuresMensu)', m1.heuresNormalesMensu, 173.33);
+assert('mensualisationBrute (173.33 * 4.50)', m1.mensualisationBrute, 780);
+
+// ================================================================
+// Mensualisation - Test 2: With overtime (48h/52sem, majo 10%)
+// ================================================================
+section('Mensualisation - AC 48h/52sem avec majoration');
+var contrat2 = {
+  nbSemContrat: 52,
+  heuresParSemaine: 48,
+  joursParSemaine: 5,
+  tauxHoraire: 4.50,
+  majorationHS: true,
+  pourcentMajo: 0.10
+};
+var m2 = calculMensualisation(contrat2);
+// heuresMensu = 48 * 52 / 12 = 208
+assert('heuresMensu (48h/52sem)', m2.heuresMensu, 208);
+// heuresMajoMensu = (48-45) * 52 / 12 = 3*52/12 = 13
+assert('heuresMajoMensu (48h)', m2.heuresMajoMensu, 13);
+// heuresNormalesMensu = 208 - 13 = 195
+assert('heuresNormalesMensu (48h)', m2.heuresNormalesMensu, 195);
+
+// mensuBrute = 4.50 * 195 + 4.50 * 1.10 * 13 = 877.50 + 64.35 = 941.85
+assert('mensualisationBrute (48h majo)', m2.mensualisationBrute, 941.85);
+
+// ================================================================
+// Mensualisation - Test 3: AI contract (46 weeks)
+// ================================================================
+section('Mensualisation - AI 40h/46sem');
+var contratAI = {
+  nbSemContrat: 46,
+  heuresParSemaine: 40,
+  joursParSemaine: 5,
+  tauxHoraire: 4.50,
+  majorationHS: false,
+  pourcentMajo: 0.1
+};
+var mAI = calculMensualisation(contratAI);
+// 40 * 46 / 12 = 153.33
+assert('heuresMensu AI (40h/46sem)', mAI.heuresMensu, 153.33);
+assert('mensuBrute AI', mAI.mensualisationBrute, 690);
+
+// ================================================================
+// Deduction (Cour de Cassation)
+// ================================================================
+section('Deduction absence');
+assert('Deduction (780 * 8/160)', calculDeduction(780, 8, 160), 39);
+assert('Deduction (0 heures deduites)', calculDeduction(780, 0, 160), 0);
+assert('Deduction (0 heures potentielles)', calculDeduction(780, 8, 0), 0);
+assert('Deduction (full month)', calculDeduction(780, 160, 160), 780);
+
+// ================================================================
+// IE jour
+// ================================================================
+section('IE jour');
+var ieParams1 = {
+  ieMinConvJour: 2.65,
+  ieMinLegalHeure: 0.425,
+  ieContractuelHeure: 0,
+  ieContractuelJour: 3.80
+};
+// MAX(2.65, 8*0.425=3.40, 0, 3.80) = 3.80
+assert('IE 8h (max=3.80 contractuel jour)', calculIEJour(8, ieParams1), 3.80);
+
+// MAX(2.65, 10*0.425=4.25, 0, 3.80) = 4.25
+assert('IE 10h (max=4.25 legal heure)', calculIEJour(10, ieParams1), 4.25);
+
+// 0 hours = 0
+assert('IE 0h', calculIEJour(0, ieParams1), 0);
+
+// Test with contractual hourly rate
+var ieParams2 = {
+  ieMinConvJour: 2.65,
+  ieMinLegalHeure: 0.425,
+  ieContractuelHeure: 0.50,
+  ieContractuelJour: 0
+};
+// MAX(2.65, 8*0.425=3.40, 8*0.50=4.00, 0) = 4.00
+assert('IE 8h contractuel heure', calculIEJour(8, ieParams2), 4);
+
+// Test ceil behavior: 3h * 0.425 = 1.275 -> MAX(2.65, 1.275, 0, 0) = 2.65
+assert('IE 3h (min conv jour)', calculIEJour(3, { ieMinConvJour: 2.65, ieMinLegalHeure: 0.425, ieContractuelHeure: 0, ieContractuelJour: 0 }), 2.65);
+
+// Test ceil: 9h * 0.425 = 3.825 -> ceil to 3.83
+assert('IE 9h ceil', calculIEJour(9, { ieMinConvJour: 2.65, ieMinLegalHeure: 0.425, ieContractuelHeure: 0, ieContractuelJour: 0 }), 3.83);
+
+// ================================================================
+// genererJoursMois
+// ================================================================
+section('genererJoursMois');
+
+// Contrat with Mon-Fri 8h (joursTravailles keys are day-of-week: 1=Mon..5=Fri)
+var contratJours = {
+  nbSemContrat: 52,
+  heuresParSemaine: 40,
+  joursParSemaine: 5,
+  tauxHoraire: 4.50,
+  majorationHS: false,
+  pourcentMajo: 0.1,
+  joursTravailles: { 1: true, 2: true, 3: false, 4: true, 5: true, 6: false, 0: false },
+  heuresParJour: { 1: 10, 2: 10, 3: 0, 4: 10, 5: 10, 6: 0, 0: 0 }
+};
+
+// February 2026 has 28 days
+var joursFev = genererJoursMois(2026, 2, contratJours);
+assert('Fevrier 2026 = 28 jours', joursFev.length, 28);
+
+// March 2026 has 31 days
+var joursMar = genererJoursMois(2026, 3, contratJours);
+assert('Mars 2026 = 31 jours', joursMar.length, 31);
+
+// Feb 2024 is leap year = 29 days
+var joursFev24 = genererJoursMois(2024, 2, contratJours);
+assert('Fevrier 2024 (bissextile) = 29 jours', joursFev24.length, 29);
+
+// Check that Feb 1 2026 is a Sunday (Di) - non-working day
+assertStrictEqual('1er fevrier 2026 = Di', joursFev[0].nomJour, 'Di');
+assertStrictEqual('1er fevrier 2026 non travaille', joursFev[0].estTravaille, false);
+assert('1er fevrier 2026 heuresPrevues = 0', joursFev[0].heuresPrevues, 0);
+
+// Feb 2 2026 is Monday (Lu) - working day, 10h
+assertStrictEqual('2 fevrier 2026 = Lu', joursFev[1].nomJour, 'Lu');
+assertStrictEqual('2 fevrier 2026 travaille', joursFev[1].estTravaille, true);
+assert('2 fevrier 2026 heuresPrevues = 10', joursFev[1].heuresPrevues, 10);
+
+// ================================================================
+// Parametrage lookup
+// ================================================================
+section('Parametrage lookup');
+
+var p2026 = getParametrage('Autres', 2026, 2);
+assert('Taux conversion Autres 2026', p2026.tauxConversion, 0.7812);
+assert('IE min jour 2026', p2026.ieMinJour, 2.65);
+assert('IE min heure 2026', p2026.ieMinHeure, 0.425);
+assert('SMIC 2026', p2026.smic, 12.02);
+
+var p2024oct = getParametrage('Autres', 2024, 10);
+assert('Taux conversion Autres oct 2024', p2024oct.tauxConversion, 0.7812);
+assert('txBrutMin Autres oct 2024', p2024oct.txBrutMin, 3.50);
+
+var p2024jan = getParametrage('Autres', 2024, 1);
+assert('txBrutMin Autres jan 2024', p2024jan.txBrutMin, 3.43);
+
+var p2024apr = getParametrage('Autres', 2024, 4);
+assert('txBrutMin Autres avr 2024', p2024apr.txBrutMin, 3.45);
+
+var pAlsace = getParametrage('Alsace-Moselle', 2026, 2);
+assert('Taux conversion Alsace 2026', pAlsace.tauxConversion, 0.7682);
+
+var pAlsace22 = getParametrage('Alsace-Moselle', 2022, 6);
+assert('Taux conversion Alsace 2022', pAlsace22.tauxConversion, 0.7654);
+
+var pAlsace19 = getParametrage('Alsace-Moselle', 2019, 6);
+assert('Taux conversion Alsace 2019', pAlsace19.tauxConversion, 0.7651);
+
+var pNull = getParametrage('Autres', 2018, 1);
+assertStrictEqual('No parametrage for 2018', pNull, null);
+
+// ================================================================
+// Summary
+// ================================================================
+var summaryEl = document.getElementById('summary');
+var total = passed + failed;
+if (failed === 0) {
+  summaryEl.className = 'summary all-pass';
+  summaryEl.textContent = 'Tous les tests passent : ' + passed + '/' + total;
+} else {
+  summaryEl.className = 'summary has-fail';
+  summaryEl.textContent = failed + ' test(s) en echec sur ' + total;
+}
+</script>
+</body>
+</html>
