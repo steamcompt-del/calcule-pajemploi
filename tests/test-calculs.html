@@ -120,6 +120,38 @@ assert('heuresMensu AI (40h/46sem)', mAI.heuresMensu, 153.33);
 assert('mensuBrute AI', mAI.mensualisationBrute, 690);
 
 // ================================================================
+// Mensualisation - Test 4: heuresParSemaineContrat overrides planning
+// ================================================================
+section('Mensualisation - heuresParSemaineContrat (45h contrat, 48h planning)');
+var contratOverride = {
+  nbSemContrat: 52,
+  heuresParSemaine: 48,
+  heuresParSemaineContrat: 45,
+  joursParSemaine: 5,
+  tauxHoraire: 5.12,
+  majorationHS: false,
+  pourcentMajo: 0.10
+};
+var mOv = calculMensualisation(contratOverride);
+// Should use 45h (contrat) not 48h (planning)
+// heuresMensu = 45 * 52 / 12 = 195
+assert('heuresMensu uses contrat hours (45h)', mOv.heuresMensu, 195);
+assert('mensuBrute (195 * 5.12)', mOv.mensualisationBrute, 998.4);
+
+// Fallback: heuresParSemaineContrat = 0 → uses planning
+var contratFallback = {
+  nbSemContrat: 52,
+  heuresParSemaine: 48,
+  heuresParSemaineContrat: 0,
+  joursParSemaine: 5,
+  tauxHoraire: 5.12,
+  majorationHS: false,
+  pourcentMajo: 0.10
+};
+var mFb = calculMensualisation(contratFallback);
+assert('heuresMensu fallback to planning (48h)', mFb.heuresMensu, 208);
+
+// ================================================================
 // Deduction (Cour de Cassation)
 // ================================================================
 section('Deduction absence');
@@ -234,6 +266,79 @@ assert('Taux conversion Alsace 2019', pAlsace19.tauxConversion, 0.7651);
 
 var pNull = getParametrage('Autres', 2018, 1);
 assertStrictEqual('No parametrage for 2018', pNull, null);
+
+// ================================================================
+// calculReportSemaineFin
+// ================================================================
+section('calculReportSemaineFin');
+
+// Mois finissant un dimanche (jourSemaine=0) → report = 0
+var joursFiniDimanche = [
+  { jourSemaine: 1, heuresRealisees: 8 },
+  { jourSemaine: 2, heuresRealisees: 8 },
+  { jourSemaine: 3, heuresRealisees: 8 },
+  { jourSemaine: 4, heuresRealisees: 8 },
+  { jourSemaine: 5, heuresRealisees: 8 },
+  { jourSemaine: 6, heuresRealisees: 0 },
+  { jourSemaine: 0, heuresRealisees: 0 },
+];
+assert('Mois finit dimanche → report = 0', calculReportSemaineFin(joursFiniDimanche), 0);
+
+// Mois finissant un mercredi → report = heures Lu + Ma + Me
+var joursFiniMercredi = [
+  { jourSemaine: 6, heuresRealisees: 0 },
+  { jourSemaine: 0, heuresRealisees: 0 },
+  { jourSemaine: 1, heuresRealisees: 10 },
+  { jourSemaine: 2, heuresRealisees: 9 },
+  { jourSemaine: 3, heuresRealisees: 8 },
+];
+assert('Mois finit mercredi → report = 27', calculReportSemaineFin(joursFiniMercredi), 27);
+
+// Mois finissant un samedi → report depuis lundi
+var joursFiniSamedi = [
+  { jourSemaine: 1, heuresRealisees: 8 },
+  { jourSemaine: 2, heuresRealisees: 8 },
+  { jourSemaine: 3, heuresRealisees: 8 },
+  { jourSemaine: 4, heuresRealisees: 8 },
+  { jourSemaine: 5, heuresRealisees: 8 },
+  { jourSemaine: 6, heuresRealisees: 4 },
+];
+assert('Mois finit samedi → report = 44', calculReportSemaineFin(joursFiniSamedi), 44);
+
+// Tableau vide → 0
+assert('Tableau vide → report = 0', calculReportSemaineFin([]), 0);
+assert('Null → report = 0', calculReportSemaineFin(null), 0);
+
+// ================================================================
+// grouperParSemaine
+// ================================================================
+section('grouperParSemaine');
+
+// 7 jours (Di, Lu, Ma, Me, Je, Ve, Sa) → 2 semaines (Di seul + Lu-Sa)
+var joursTest = [
+  { jourSemaine: 0, numero: 1 },
+  { jourSemaine: 1, numero: 2 },
+  { jourSemaine: 2, numero: 3 },
+  { jourSemaine: 3, numero: 4 },
+  { jourSemaine: 4, numero: 5 },
+  { jourSemaine: 5, numero: 6 },
+  { jourSemaine: 6, numero: 7 },
+];
+var semaines = grouperParSemaine(joursTest);
+assert('2 semaines pour Di + Lu-Sa', semaines.length, 2);
+assert('Semaine 1 = 1 jour (Di)', semaines[0].jours.length, 1);
+assert('Semaine 2 = 6 jours (Lu-Sa)', semaines[1].jours.length, 6);
+assert('Semaine 2 startIdx = 1', semaines[1].startIdx, 1);
+
+// Mois commencant un lundi → 1 seule semaine
+var joursLundi = [
+  { jourSemaine: 1, numero: 1 },
+  { jourSemaine: 2, numero: 2 },
+  { jourSemaine: 3, numero: 3 },
+];
+var semainesLu = grouperParSemaine(joursLundi);
+assert('Mois commence lundi = 1 semaine', semainesLu.length, 1);
+assert('Semaine 1 = 3 jours', semainesLu[0].jours.length, 3);
 
 // ================================================================
 // Summary

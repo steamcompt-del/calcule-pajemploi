@@ -33,7 +33,9 @@ function round2(n) {
  */
 function calculMensualisation(contrat) {
   var nbSemContrat = contrat.nbSemContrat;
-  var heuresParSemaine = contrat.heuresParSemaine;
+  var heuresParSemaine = contrat.heuresParSemaineContrat > 0
+    ? contrat.heuresParSemaineContrat
+    : contrat.heuresParSemaine;
   var joursParSemaine = contrat.joursParSemaine;
   var tauxHoraire = contrat.tauxHoraire;
   var majorationHS = contrat.majorationHS;
@@ -313,4 +315,62 @@ function genererJoursMois(year, month, contrat) {
   }
 
   return jours;
+}
+
+/**
+ * Calcule le report d'heures de la dernière semaine partielle d'un mois.
+ *
+ * Parcourt les jours depuis la fin du mois, remonte jusqu'au dernier lundi
+ * et additionne les heuresRealisees.
+ * Si le mois se termine un dimanche, la semaine est complète → report = 0.
+ *
+ * @param {Array} jours - tableau de jours du mois (issu de genererJoursMois / loadMois)
+ * @returns {number} total heuresRealisees de la dernière semaine partielle
+ */
+function calculReportSemaineFin(jours) {
+  if (!jours || jours.length === 0) return 0;
+
+  var lastDay = jours[jours.length - 1];
+  // Dimanche (jourSemaine === 0) → semaine complète, pas de report
+  if (lastDay.jourSemaine === 0) return 0;
+
+  var report = 0;
+  for (var i = jours.length - 1; i >= 0; i--) {
+    report += jours[i].heuresRealisees || 0;
+    // Si on atteint un lundi (jourSemaine === 1), on a la semaine complète depuis lundi
+    if (jours[i].jourSemaine === 1) break;
+  }
+
+  return round2(report);
+}
+
+/**
+ * Regroupe les jours d'un mois en semaines (lundi → dimanche).
+ * La première semaine peut être partielle (commence après lundi).
+ * La dernière semaine peut être partielle (se termine avant dimanche).
+ *
+ * @param {Array} jours - tableau de jours du mois
+ * @returns {Array} tableau de semaines, chaque élément = { startIdx, endIdx, jours: [...] }
+ */
+function grouperParSemaine(jours) {
+  if (!jours || jours.length === 0) return [];
+
+  var semaines = [];
+  var currentWeek = { startIdx: 0, jours: [] };
+
+  for (var i = 0; i < jours.length; i++) {
+    // Nouvelle semaine si c'est lundi ET pas le premier jour
+    if (jours[i].jourSemaine === 1 && i > 0) {
+      currentWeek.endIdx = i - 1;
+      semaines.push(currentWeek);
+      currentWeek = { startIdx: i, jours: [] };
+    }
+    currentWeek.jours.push(jours[i]);
+  }
+
+  // Dernière semaine
+  currentWeek.endIdx = jours.length - 1;
+  semaines.push(currentWeek);
+
+  return semaines;
 }

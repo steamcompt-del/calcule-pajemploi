@@ -3,6 +3,7 @@
 
 var joursData = [];
 var currentContrat = null;
+var reportHeuresSemPrecedente = 0;
 
 // ============================================================
 // Initialisation
@@ -12,13 +13,15 @@ document.addEventListener('DOMContentLoaded', function () {
   initTabs();
   initContratForm();
   initPresenceListener();
+  initReportListener();
   initCopyButton();
+  initBackupButtons();
 
   // Load saved contract
   var saved = loadContrat();
   if (saved) {
-    currentContrat = saved;
     fillContratForm(saved);
+    currentContrat = readContratForm();
   }
 
   loadAndDisplay();
@@ -117,8 +120,9 @@ function readContratForm() {
   var nbSemContrat = parseFloat(document.getElementById('nbSemContrat').value) || 52;
   var tauxHoraire = parseFloat(document.getElementById('tauxHoraire').value) || 0;
   var majorationHS = document.getElementById('majorationHS').checked;
-  var pourcentMajo = majorationHS ? (parseFloat(document.getElementById('pourcentMajo').value) || 0) / 100 : 0;
+  var pourcentMajo = (parseFloat(document.getElementById('pourcentMajo').value) || 0) / 100;
   var region = document.getElementById('region').value;
+  var heuresParSemaineContrat = parseFloat(document.getElementById('heuresParSemaineContrat').value) || 0;
 
   // Day configs
   var joursTravailles = { 0: false, 1: false, 2: false, 3: false, 4: false, 5: false, 6: false };
@@ -150,6 +154,7 @@ function readContratForm() {
     typeContrat: typeContrat,
     nbSemContrat: nbSemContrat,
     heuresParSemaine: heuresParSemaine,
+    heuresParSemaineContrat: heuresParSemaineContrat,
     joursParSemaine: joursParSemaine,
     joursTravailles: joursTravailles,
     heuresParJour: heuresParJour,
@@ -176,6 +181,7 @@ function fillContratForm(c) {
   document.getElementById('majorationHS').checked = !!c.majorationHS;
   document.getElementById('group-pourcentMajo').style.display = c.majorationHS ? '' : 'none';
   document.getElementById('pourcentMajo').value = c.pourcentMajo ? Math.round(c.pourcentMajo * 100) : 10;
+  document.getElementById('heuresParSemaineContrat').value = c.heuresParSemaineContrat || 0;
 
   // Day configs
   for (var dow = 1; dow <= 6; dow++) {
@@ -196,6 +202,43 @@ function fillContratForm(c) {
   document.getElementById('tarifRepas2').value = c.tarifRepas2 || 0;
   document.getElementById('tarifRepas3').value = c.tarifRepas3 || 0;
   document.getElementById('tarifKm').value = c.tarifKm || 0;
+}
+
+// ============================================================
+// Report heures semaine précédente
+// ============================================================
+function initReportListener() {
+  var input = document.getElementById('report-heures');
+  input.addEventListener('input', function () {
+    reportHeuresSemPrecedente = parseFloat(this.value) || 0;
+    renderPresence();
+    recalculer();
+  });
+}
+
+function autoRemplirReport(year, month) {
+  var prevMonth = month - 1;
+  var prevYear = year;
+  if (prevMonth < 1) { prevMonth = 12; prevYear--; }
+
+  var prevData = loadMois(prevYear, prevMonth);
+  var report = prevData ? calculReportSemaineFin(prevData) : 0;
+
+  reportHeuresSemPrecedente = report;
+  document.getElementById('report-heures').value = report;
+
+  var info = document.getElementById('report-info');
+  if (report > 0) {
+    var moisNoms = [
+      'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+      'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
+    ];
+    info.textContent = '(auto depuis ' + moisNoms[prevMonth - 1] + ' ' + prevYear + ')';
+  } else if (!prevData) {
+    info.textContent = '(aucune donnée mois précédent)';
+  } else {
+    info.textContent = '';
+  }
 }
 
 // ============================================================
@@ -221,6 +264,9 @@ function loadAndDisplay() {
     showNotification('Pas de paramétrage pour cette période');
     return;
   }
+
+  // Auto-remplir le report de la semaine précédente
+  autoRemplirReport(year, month);
 
   // Load saved month data or generate fresh
   var saved = loadMois(year, month);
@@ -253,48 +299,86 @@ function renderPresence() {
     ieContractuelJour: currentContrat.ieContractuelJour || 0,
   };
 
-  for (var i = 0; i < joursData.length; i++) {
-    var j = joursData[i];
-    var tr = document.createElement('tr');
-    if (!j.estTravaille) tr.classList.add('jour-off');
+  // Regrouper par semaine pour afficher séparateurs
+  var semaines = grouperParSemaine(joursData);
 
-    // Calculate IE for this day
-    var ieJour = calculIEJour(j.heuresRealisees || 0, ieParams);
+  for (var s = 0; s < semaines.length; s++) {
+    var semaine = semaines[s];
 
-    // Absent badge
-    var isAbsent = j.heuresPrevues > 0 && (j.heuresDeduire || 0) >= j.heuresPrevues;
+    // Calculer le total heures réalisées de cette semaine
+    var totalSemaine = 0;
+    for (var k = 0; k < semaine.jours.length; k++) {
+      totalSemaine += semaine.jours[k].heuresRealisees || 0;
+    }
+    // Pour la première semaine, ajouter le report
+    var totalAvecReport = totalSemaine;
+    if (s === 0) {
+      totalAvecReport += reportHeuresSemPrecedente;
+    }
 
-    tr.innerHTML =
-      // Jour
-      '<td>' + j.nomJour + ' ' + j.numero + '</td>' +
-      // Prevu (auto)
-      '<td class="col-auto">' + (j.heuresPrevues || '') + '</td>' +
-      // Potentielles (auto)
-      '<td class="col-auto">' + (j.heuresPotentielles || '') + '</td>' +
-      // Realise (input)
-      '<td><input type="number" data-idx="' + i + '" data-field="heuresRealisees" value="' + (j.heuresRealisees || 0) + '" min="0" max="24" step="0.25"></td>' +
-      // Deduire (input)
-      '<td><input type="number" data-idx="' + i + '" data-field="heuresDeduire" value="' + (j.heuresDeduire || 0) + '" min="0" max="24" step="0.25"></td>' +
-      // Absent (auto badge)
-      '<td class="col-auto">' + (isAbsent ? '<span class="badge-absent">ABS</span>' : '') + '</td>' +
-      // H.Comp (input)
-      '<td><input type="number" data-idx="' + i + '" data-field="heuresComp" value="' + (j.heuresComp || 0) + '" min="0" max="24" step="0.25"></td>' +
-      // H.Majo (input)
-      '<td><input type="number" data-idx="' + i + '" data-field="heuresMajo" value="' + (j.heuresMajo || 0) + '" min="0" max="24" step="0.25"></td>' +
-      // IE (auto)
-      '<td class="col-auto">' + (ieJour > 0 ? ieJour.toFixed(2) : '') + '</td>' +
-      // IR (3 selects)
-      '<td class="ir-cell">' +
-        buildIRSelect(i, 'irType1', j.irType1 || 0) +
-        buildIRSelect(i, 'irType2', j.irType2 || 0) +
-        buildIRSelect(i, 'irType3', j.irType3 || 0) +
-      '</td>' +
-      // IK km (input)
-      '<td><input type="number" data-idx="' + i + '" data-field="km" value="' + (j.km || 0) + '" min="0" step="0.1"></td>' +
-      // Commentaire (input)
-      '<td><input type="text" data-idx="' + i + '" data-field="commentaire" value="' + escapeHtml(j.commentaire || '') + '"></td>';
+    // Insérer un séparateur AVANT chaque semaine (sauf la première)
+    if (s > 0) {
+      var sepRow = document.createElement('tr');
+      sepRow.className = 'semaine-separator';
+      sepRow.innerHTML = '<td colspan="12"></td>';
+      tbody.appendChild(sepRow);
+    }
 
-    tbody.appendChild(tr);
+    // Rendre les jours de la semaine
+    for (var k = 0; k < semaine.jours.length; k++) {
+      var globalIdx = semaine.startIdx + k;
+      var j = semaine.jours[k];
+      var tr = document.createElement('tr');
+      if (!j.estTravaille) tr.classList.add('jour-off');
+
+      // Calculate IE for this day
+      var ieJour = calculIEJour(j.heuresRealisees || 0, ieParams);
+
+      // Absent badge
+      var isAbsent = j.heuresPrevues > 0 && (j.heuresDeduire || 0) >= j.heuresPrevues;
+
+      tr.innerHTML =
+        '<td>' + j.nomJour + ' ' + j.numero + '</td>' +
+        '<td class="col-auto">' + (j.heuresPrevues || '') + '</td>' +
+        '<td class="col-auto">' + (j.heuresPotentielles || '') + '</td>' +
+        '<td><input type="number" data-idx="' + globalIdx + '" data-field="heuresRealisees" value="' + (j.heuresRealisees || 0) + '" min="0" max="24" step="0.25"></td>' +
+        '<td><input type="number" data-idx="' + globalIdx + '" data-field="heuresDeduire" value="' + (j.heuresDeduire || 0) + '" min="0" max="24" step="0.25"></td>' +
+        '<td class="col-auto">' + (isAbsent ? '<span class="badge-absent">ABS</span>' : '') + '</td>' +
+        '<td><input type="number" data-idx="' + globalIdx + '" data-field="heuresComp" value="' + (j.heuresComp || 0) + '" min="0" max="24" step="0.25"></td>' +
+        '<td><input type="number" data-idx="' + globalIdx + '" data-field="heuresMajo" value="' + (j.heuresMajo || 0) + '" min="0" max="24" step="0.25"></td>' +
+        '<td class="col-auto">' + (ieJour > 0 ? ieJour.toFixed(2) : '') + '</td>' +
+        '<td class="ir-cell">' +
+          buildIRSelect(globalIdx, 'irType1', j.irType1 || 0) +
+          buildIRSelect(globalIdx, 'irType2', j.irType2 || 0) +
+          buildIRSelect(globalIdx, 'irType3', j.irType3 || 0) +
+        '</td>' +
+        '<td><input type="number" data-idx="' + globalIdx + '" data-field="km" value="' + (j.km || 0) + '" min="0" step="0.1"></td>' +
+        '<td><input type="text" data-idx="' + globalIdx + '" data-field="commentaire" value="' + escapeHtml(j.commentaire || '') + '"></td>';
+
+      tbody.appendChild(tr);
+    }
+
+    // Ligne résumé de la semaine après les jours
+    var summaryRow = document.createElement('tr');
+    var isOver45 = totalAvecReport > 45;
+    summaryRow.className = 'semaine-summary' + (isOver45 ? ' semaine-over45' : '');
+
+    var label = 'Sem. ' + (s + 1) + ' : ' + round2(totalAvecReport) + ' h';
+    if (s === 0 && reportHeuresSemPrecedente > 0) {
+      label += ' (dont ' + reportHeuresSemPrecedente + ' h report)';
+    }
+    if (isOver45) {
+      label += ' ⚠ >' + '45h → ' + round2(totalAvecReport - 45) + ' h majorées';
+    }
+
+    // Vérifier si c'est la dernière semaine et si elle est partielle (report pour mois suivant)
+    var lastDayOfWeek = semaine.jours[semaine.jours.length - 1];
+    if (s === semaines.length - 1 && lastDayOfWeek.jourSemaine !== 0) {
+      label += ' (semaine partielle → report mois suivant)';
+    }
+
+    summaryRow.innerHTML = '<td colspan="12">' + label + '</td>';
+    tbody.appendChild(summaryRow);
   }
 
   renderTotals();
@@ -494,8 +578,8 @@ function initCopyButton() {
     var p = resultats.pajemploi;
 
     var moisNoms = [
-      'Janvier', 'Fevrier', 'Mars', 'Avril', 'Mai', 'Juin',
-      'Juillet', 'Aout', 'Septembre', 'Octobre', 'Novembre', 'Decembre'
+      'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+      'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
     ];
 
     var lines = [
@@ -584,4 +668,70 @@ function showNotification(msg) {
   setTimeout(function () {
     if (div.parentNode) div.parentNode.removeChild(div);
   }, 2000);
+}
+
+// ============================================================
+// Backup : Export / Import
+// ============================================================
+function initBackupButtons() {
+  // Export
+  document.getElementById('btn-export').addEventListener('click', function () {
+    var data = exporterDonnees();
+    var json = JSON.stringify(data, null, 2);
+    var blob = new Blob([json], { type: 'application/json' });
+    var url = URL.createObjectURL(blob);
+
+    var today = new Date().toISOString().slice(0, 10);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'pajemploi-backup-' + today + '.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    showNotification('Données exportées');
+  });
+
+  // Import : ouvrir le sélecteur de fichier
+  document.getElementById('btn-import-trigger').addEventListener('click', function () {
+    document.getElementById('btn-import-file').click();
+  });
+
+  // Import : traiter le fichier sélectionné
+  document.getElementById('btn-import-file').addEventListener('change', function (e) {
+    var file = e.target.files[0];
+    if (!file) return;
+
+    var reader = new FileReader();
+    reader.onload = function (evt) {
+      try {
+        var data = JSON.parse(evt.target.result);
+        var nbMois = data.mois ? Object.keys(data.mois).length : 0;
+        var msg = 'Importer ' + (data.contrat ? '1 contrat' : '0 contrat') + ' et ' + nbMois + ' mois ?\nCela écrasera les données existantes.';
+
+        if (!confirm(msg)) {
+          showNotification('Import annulé');
+          return;
+        }
+
+        var result = importerDonnees(data);
+
+        // Recharger l'interface
+        if (result.contrat) {
+          currentContrat = loadContrat();
+          fillContratForm(currentContrat);
+        }
+        loadAndDisplay();
+
+        showNotification('Import réussi : ' + (result.contrat ? 'contrat + ' : '') + result.moisCount + ' mois');
+      } catch (err) {
+        showNotification('Erreur : ' + err.message);
+      }
+    };
+    reader.readAsText(file);
+
+    // Reset pour permettre de réimporter le même fichier
+    this.value = '';
+  });
 }

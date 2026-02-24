@@ -372,6 +372,78 @@ body {
 }
 
 /* ============================================================
+   REPORT SEMAINE PRECEDENTE
+   ============================================================ */
+.report-semaine {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 0;
+  margin-bottom: 0.5rem;
+  border-bottom: 1px dashed var(--border);
+}
+
+.report-semaine label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-light);
+  white-space: nowrap;
+}
+
+.report-semaine input[type="number"] {
+  width: 70px;
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.report-semaine input[type="number"]:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--primary-light);
+}
+
+.report-unit {
+  font-size: 0.85rem;
+  color: var(--text-light);
+}
+
+.report-info {
+  font-size: 0.75rem;
+  color: var(--text-light);
+  font-style: italic;
+}
+
+/* ============================================================
+   SEMAINE SEPARATORS & SUMMARIES
+   ============================================================ */
+.presence-table tr.semaine-separator td {
+  height: 6px;
+  padding: 0;
+  border: none;
+  background: var(--bg);
+}
+
+.presence-table tr.semaine-summary td {
+  padding: 0.4rem 0.6rem;
+  text-align: left;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-light);
+  background: #f1f5f9;
+  border: none;
+  border-bottom: 2px solid var(--border);
+}
+
+.presence-table tr.semaine-over45 td {
+  color: var(--warning);
+  background: #fef3c7;
+  border-bottom-color: var(--warning);
+}
+
+/* ============================================================
    RESULT PANEL STYLES
    ============================================================ */
 .result-grid {
@@ -452,6 +524,49 @@ body {
 
 #history-list a:hover {
   text-decoration: underline;
+}
+
+/* ============================================================
+   BACKUP BUTTONS
+   ============================================================ */
+.backup-section {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.btn-backup {
+  width: 100%;
+  padding: 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.btn-export {
+  background: var(--surface);
+  color: var(--text);
+}
+
+.btn-export:hover {
+  background: var(--bg);
+  border-color: var(--primary);
+}
+
+.btn-import {
+  background: var(--surface);
+  color: var(--text);
+}
+
+.btn-import:hover {
+  background: var(--bg);
+  border-color: var(--primary);
 }
 
 /* ============================================================

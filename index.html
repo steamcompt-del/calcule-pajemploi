@@ -50,6 +50,10 @@
                   <option value="Alsace-Moselle">Alsace-Moselle</option>
                 </select>
               </div>
+              <div class="form-group">
+                <label for="heuresParSemaineContrat">Heures/semaine contrat</label>
+                <input type="number" id="heuresParSemaineContrat" name="heuresParSemaineContrat" value="0" min="0" max="60" step="0.25">
+              </div>
               <div class="form-group form-group-inline">
                 <label>
                   <input type="checkbox" id="majorationHS" name="majorationHS">
@@ -129,6 +133,12 @@
 
       <!-- ==================== TAB PRESENCE ==================== -->
       <div id="tab-presence" class="tab-content">
+        <div class="report-semaine">
+          <label for="report-heures">Report heures semaine précédente :</label>
+          <input type="number" id="report-heures" value="0" min="0" step="0.25">
+          <span class="report-unit">h</span>
+          <span id="report-info" class="report-info"></span>
+        </div>
         <div class="presence-wrapper">
           <table id="table-presence" class="presence-table">
             <thead><tr>
@@ -192,6 +202,11 @@
         <summary>Historique des mois</summary>
         <ul id="history-list"></ul>
       </details>
+      <div class="backup-section">
+        <button id="btn-export" class="btn-backup btn-export">Exporter les données</button>
+        <button id="btn-import-trigger" class="btn-backup btn-import">Importer des données</button>
+        <input type="file" id="btn-import-file" accept=".json" style="display:none;">
+      </div>
     </aside>
   </main>
 
