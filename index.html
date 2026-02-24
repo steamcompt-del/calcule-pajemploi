@@ -11,7 +11,7 @@
     <h1>Calcul Pajemploi</h1>
     <div class="header-controls">
       <label>Mois : <select id="select-month"></select></label>
-      <label>Annee : <select id="select-year"></select></label>
+      <label>Année : <select id="select-year"></select></label>
     </div>
   </header>
 
@@ -19,7 +19,7 @@
     <section class="central-panel">
       <nav class="tabs">
         <button class="tab active" data-tab="contrat">Contrat</button>
-        <button class="tab" data-tab="presence">Presence</button>
+        <button class="tab" data-tab="presence">Présence</button>
       </nav>
 
       <!-- ==================== TAB CONTRAT ==================== -->
@@ -31,8 +31,8 @@
               <div class="form-group">
                 <label for="typeContrat">Type de contrat</label>
                 <select id="typeContrat" name="typeContrat">
-                  <option value="AC">Annee complete (AC)</option>
-                  <option value="AI">Annee incomplete (AI)</option>
+                  <option value="AC">Année complète (AC)</option>
+                  <option value="AI">Année incomplète (AI)</option>
                 </select>
               </div>
               <div class="form-group">
@@ -44,7 +44,7 @@
                 <input type="number" id="tauxHoraire" name="tauxHoraire" value="3.50" min="0" step="0.01">
               </div>
               <div class="form-group">
-                <label for="region">Region</label>
+                <label for="region">Région</label>
                 <select id="region" name="region">
                   <option value="Autres">Autres (hors Alsace-Moselle)</option>
                   <option value="Alsace-Moselle">Alsace-Moselle</option>
@@ -53,7 +53,7 @@
               <div class="form-group form-group-inline">
                 <label>
                   <input type="checkbox" id="majorationHS" name="majorationHS">
-                  Majoration heures supplementaires
+                  Majoration heures supplémentaires
                 </label>
               </div>
               <div class="form-group" id="group-pourcentMajo" style="display:none;">
@@ -64,7 +64,7 @@
           </fieldset>
 
           <fieldset class="form-section">
-            <legend>Jours travailles</legend>
+            <legend>Jours travaillés</legend>
             <div class="jours-grid">
               <div class="jour-config">
                 <label><input type="checkbox" id="jour-1" data-dow="1"> Lundi</label>
@@ -94,7 +94,7 @@
           </fieldset>
 
           <fieldset class="form-section">
-            <legend>Indemnites</legend>
+            <legend>Indemnités</legend>
             <div class="form-grid">
               <div class="form-group">
                 <label for="ieContractuelJour">IE / jour</label>
@@ -132,7 +132,7 @@
         <div class="presence-wrapper">
           <table id="table-presence" class="presence-table">
             <thead><tr>
-              <th>Jour</th><th>Prevu</th><th>Potent.</th><th>Realise</th><th>Deduire</th>
+              <th>Jour</th><th>Prévu</th><th>Potent.</th><th>Réalisé</th><th>Déduire</th>
               <th>Absent</th><th>H.Comp</th><th>H.Majo</th><th>IE</th>
               <th>IR</th><th>IK (km)</th><th>Commentaire</th>
             </tr></thead>
@@ -144,7 +144,7 @@
     </section>
 
     <aside class="side-panel">
-      <h2>Declaration Pajemploi</h2>
+      <h2>Déclaration Pajemploi</h2>
       <div id="pajemploi-results">
         <div class="result-grid">
           <div class="result-item">
@@ -156,11 +156,11 @@
             <span class="result-value" id="res-heures-comp">--</span>
           </div>
           <div class="result-item">
-            <span class="result-label">Heures majorees</span>
+            <span class="result-label">Heures majorées</span>
             <span class="result-value" id="res-heures-majo">--</span>
           </div>
           <div class="result-item">
-            <span class="result-label">Jours d'activite</span>
+            <span class="result-label">Jours d'activité</span>
             <span class="result-value" id="res-jours-activite">--</span>
           </div>
           <div class="result-divider"></div>
@@ -174,15 +174,15 @@
           </div>
           <div class="result-divider"></div>
           <div class="result-item">
-            <span class="result-label">Indemnites entretien</span>
+            <span class="result-label">Indemnités entretien</span>
             <span class="result-value" id="res-ie">--</span>
           </div>
           <div class="result-item">
-            <span class="result-label">Indemnites repas</span>
+            <span class="result-label">Indemnités repas</span>
             <span class="result-value" id="res-ir">--</span>
           </div>
           <div class="result-item">
-            <span class="result-label">Indemnites km</span>
+            <span class="result-label">Indemnités km</span>
             <span class="result-value" id="res-ik">--</span>
           </div>
         </div>

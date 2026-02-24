@@ -31,8 +31,8 @@ function initSelectors() {
   var selectMonth = document.getElementById('select-month');
   var selectYear = document.getElementById('select-year');
   var moisNoms = [
-    'Janvier', 'Fevrier', 'Mars', 'Avril', 'Mai', 'Juin',
-    'Juillet', 'Aout', 'Septembre', 'Octobre', 'Novembre', 'Decembre'
+    'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+    'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
   ];
 
   var now = new Date();
@@ -107,7 +107,7 @@ function initContratForm() {
     var contrat = readContratForm();
     currentContrat = contrat;
     saveContrat(contrat);
-    showNotification('Contrat enregistre');
+    showNotification('Contrat enregistré');
     loadAndDisplay();
   });
 }
@@ -218,7 +218,7 @@ function loadAndDisplay() {
 
   var parametrage = getParametrage(currentContrat.region, year, month);
   if (!parametrage) {
-    showNotification('Pas de parametrage pour cette periode');
+    showNotification('Pas de paramétrage pour cette période');
     return;
   }
 
@@ -457,11 +457,11 @@ function renderResultats(resultats) {
   document.getElementById('res-heures-comp').textContent = p.heuresComplementaires + ' h';
   document.getElementById('res-heures-majo').textContent = p.heuresMajorees + ' h';
   document.getElementById('res-jours-activite').textContent = p.joursActivite + ' j';
-  document.getElementById('res-salaire-net').textContent = p.salaireNet.toFixed(2) + ' EUR';
-  document.getElementById('res-taux-net').textContent = p.tauxHoraireNet.toFixed(2) + ' EUR/h';
-  document.getElementById('res-ie').textContent = p.ie.toFixed(2) + ' EUR';
-  document.getElementById('res-ir').textContent = p.ir.toFixed(2) + ' EUR';
-  document.getElementById('res-ik').textContent = p.ik.toFixed(2) + ' EUR';
+  document.getElementById('res-salaire-net').textContent = p.salaireNet.toFixed(2) + ' €';
+  document.getElementById('res-taux-net').textContent = p.tauxHoraireNet.toFixed(2) + ' €/h';
+  document.getElementById('res-ie').textContent = p.ie.toFixed(2) + ' €';
+  document.getElementById('res-ir').textContent = p.ir.toFixed(2) + ' €';
+  document.getElementById('res-ik').textContent = p.ik.toFixed(2) + ' €';
 }
 
 function clearResultats() {
@@ -481,7 +481,7 @@ function clearResultats() {
 function initCopyButton() {
   document.getElementById('btn-copy').addEventListener('click', function () {
     if (!currentContrat || joursData.length === 0) {
-      showNotification('Aucune donnee a copier');
+      showNotification('Aucune donnée à copier');
       return;
     }
 
@@ -499,21 +499,21 @@ function initCopyButton() {
     ];
 
     var lines = [
-      'Declaration Pajemploi - ' + moisNoms[month - 1] + ' ' + year,
+      'Déclaration Pajemploi - ' + moisNoms[month - 1] + ' ' + year,
       '---',
       'Heures normales : ' + p.heuresNormales + ' h',
-      'Heures complementaires : ' + p.heuresComplementaires + ' h',
-      'Heures majorees : ' + p.heuresMajorees + ' h',
-      'Jours d\'activite : ' + p.joursActivite + ' j',
-      'Salaire net : ' + p.salaireNet.toFixed(2) + ' EUR',
-      'Taux horaire net : ' + p.tauxHoraireNet.toFixed(2) + ' EUR/h',
-      'Indemnites entretien : ' + p.ie.toFixed(2) + ' EUR',
-      'Indemnites repas : ' + p.ir.toFixed(2) + ' EUR',
-      'Indemnites km : ' + p.ik.toFixed(2) + ' EUR',
+      'Heures complémentaires : ' + p.heuresComplementaires + ' h',
+      'Heures majorées : ' + p.heuresMajorees + ' h',
+      'Jours d\'activité : ' + p.joursActivite + ' j',
+      'Salaire net : ' + p.salaireNet.toFixed(2) + ' €',
+      'Taux horaire net : ' + p.tauxHoraireNet.toFixed(2) + ' €/h',
+      'Indemnités entretien : ' + p.ie.toFixed(2) + ' €',
+      'Indemnités repas : ' + p.ir.toFixed(2) + ' €',
+      'Indemnités km : ' + p.ik.toFixed(2) + ' €',
     ];
 
     navigator.clipboard.writeText(lines.join('\n')).then(function () {
-      showNotification('Valeurs copiees dans le presse-papier');
+      showNotification('Valeurs copiées dans le presse-papier');
     }).catch(function () {
       showNotification('Erreur lors de la copie');
     });
@@ -532,10 +532,10 @@ function renderFooter(parametrage) {
 
   el.innerHTML =
     '<span>Taux conversion : ' + parametrage.tauxConversion + '</span>' +
-    '<span>IE min/jour : ' + parametrage.ieMinJour.toFixed(2) + ' EUR</span>' +
-    '<span>IE min/heure : ' + parametrage.ieMinHeure.toFixed(3) + ' EUR</span>' +
-    '<span>SMIC : ' + parametrage.smic.toFixed(2) + ' EUR</span>' +
-    '<span>Taux brut min : ' + parametrage.txBrutMin.toFixed(2) + ' EUR</span>';
+    '<span>IE min/jour : ' + parametrage.ieMinJour.toFixed(2) + ' €</span>' +
+    '<span>IE min/heure : ' + parametrage.ieMinHeure.toFixed(3) + ' €</span>' +
+    '<span>SMIC : ' + parametrage.smic.toFixed(2) + ' €</span>' +
+    '<span>Taux brut min : ' + parametrage.txBrutMin.toFixed(2) + ' €</span>';
 }
 
 // ============================================================
@@ -546,14 +546,14 @@ function renderHistory() {
   var moisSauv = listMoisSauvegardes();
 
   var moisNoms = [
-    'Janvier', 'Fevrier', 'Mars', 'Avril', 'Mai', 'Juin',
-    'Juillet', 'Aout', 'Septembre', 'Octobre', 'Novembre', 'Decembre'
+    'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+    'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
   ];
 
   list.innerHTML = '';
 
   if (moisSauv.length === 0) {
-    list.innerHTML = '<li style="color:var(--text-light);font-size:0.85rem;">Aucun mois enregistre</li>';
+    list.innerHTML = '<li style="color:var(--text-light);font-size:0.85rem;">Aucun mois enregistré</li>';
     return;
   }
 
