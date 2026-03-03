@@ -301,7 +301,7 @@ function genererJoursMois(year, month, contrat) {
       estTravaille: estTravaille,
       heuresPrevues: heuresPrevues,
       heuresPotentielles: heuresPrevues,
-      heuresRealisees: 0,
+      heuresRealisees: heuresPrevues,
       heuresDeduire: 0,
       heuresComp: 0,
       heuresMajo: 0,
